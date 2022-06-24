@@ -1,6 +1,6 @@
 # dependencies
 /node_modules
-/genereate
+/generate
 /.vscode
 /.pnp
 .pnp.js
