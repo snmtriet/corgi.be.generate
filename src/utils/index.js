@@ -1,5 +1,24 @@
 const mapFolder = require("map-folder");
 
+// --------------------------
+
+const width = 1000; // Change to the resolution you want 1000 x 1000 is common
+const height = 1000;
+const description = "Nft description";
+const baseImageUri = "https://gateway.ipfs.io/";
+const startEditionFrom = 1; //
+const endEditionAt = 10; // endEditionAt and edtionSize MUST be the SAME // start at 10 for testing purposes
+const editionSize = 10; // this will print 10 copies
+const raceWeights = [
+  {
+    value: "Nft", // Change to whatever you want
+    from: 1,
+    to: editionSize,
+  },
+];
+
+// --------------------------
+
 const traitList = [
   "accessory",
   "background",
@@ -25,32 +44,45 @@ const mapFolderInput = (destination) => {
   return traits.flat();
 };
 
-const createConfig = (destination) => {
+const createConfig = (destination, width, height) => {
   const traits = mapFolderInput(destination);
-  const a = getElementsTrait(traits, "accessory", 800, 800);
-  console.log(a);
 
   const races = {
     Nft: {
       // Must bee the same as value on line 12 | ALL CAPITALIZATIONS MATTER
       name: "Nft", // Make same as above | This is just a skeleton, more characters/skins can be added later
-      layers: "a",
+      layers: [
+        getElementsTrait(traits, "accessory", width, height),
+        getElementsTrait(traits, "background", width, height),
+        getElementsTrait(traits, "face", width, height),
+        getElementsTrait(traits, "left_eye", width, height),
+        getElementsTrait(traits, "mouth", width, height),
+        getElementsTrait(traits, "right_eye", width, height),
+      ],
     },
   };
+  return races;
 };
 
 const getElementsTrait = (traits, type, width, height) => {
-  const traitsWithId = traits.map((trait, i) => {
-    return {
-      id: i,
-      name: trait.base.replaceAll("_", " "),
-      path: trait.path,
-      type: trait.type,
-    };
+  const cloneTraits = [...traits];
+
+  const traitFiltered = cloneTraits.filter((trait) => {
+    return trait.type === type;
   });
 
-  const traitFiltered = traitsWithId.filter((trait) => {
-    return trait.type === type;
+  const weightRate = Math.floor((Math.random() * 100) / traitFiltered.length);
+
+  traitFiltered.forEach((trait, i) => {
+    if (trait.type === type) {
+      traitFiltered[i] = {
+        id: i,
+        name: trait.base.replaceAll("_", " "),
+        path: trait.path,
+        type: trait.type,
+        weight: i > 0 ? traitFiltered[i - 1].weight - weightRate : 100,
+      };
+    }
   });
 
   const traitConfig = {
@@ -62,4 +94,15 @@ const getElementsTrait = (traits, type, width, height) => {
   return traitConfig;
 };
 
-module.exports = { traitList, mapFolderInput, createConfig, getElementsTrait };
+module.exports = {
+  width,
+  height,
+  description,
+  baseImageUri,
+  startEditionFrom,
+  endEditionAt,
+  raceWeights,
+  mapFolderInput,
+  createConfig,
+  getElementsTrait,
+};

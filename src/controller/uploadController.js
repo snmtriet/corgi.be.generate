@@ -6,8 +6,10 @@ const formidable = require("formidable");
 const extractDir = path.join(__dirname, "../../generate/inputs/");
 const outputDir = path.join(__dirname, "../../generate/outputs/output/");
 
-const startCreating = require("../../generate/index");
-const { mapFolderInput, createConfig } = require("../utils");
+const { startCreating } = require("../../generate/index");
+const { createConfig } = require("../utils");
+
+const { width, height } = require("../utils/index");
 
 if (!fs.existsSync(extractDir)) {
   fs.mkdirSync(extractDir);
@@ -48,7 +50,6 @@ exports.uploadFile = (req, res, next) => {
 
     const destDir = `${path.join(extractDir, "input")}_${new Date().getTime()}`;
     extractZip(filePath, destDir, false);
-    startCreating();
   });
 };
 
@@ -61,7 +62,8 @@ const extractZip = (file, destination, deleteSource) => {
       console.error(err);
     }
   }).then(() => {
-    createConfig(destination);
+    const resultRace = createConfig(destination, width, height);
+    startCreating(resultRace);
   });
 };
 
