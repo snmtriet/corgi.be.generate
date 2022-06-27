@@ -6,10 +6,10 @@ const formidable = require("formidable");
 const extractDir = path.join(__dirname, "../../generate/inputs/");
 const outputDir = path.join(__dirname, "../../generate/outputs/output/");
 
-const { startCreating } = require("../../generate/index");
-const { createConfig } = require("../utils");
+const { startCreating } = require("../utils/generate");
+const { createConfig } = require("../utils/createConfig");
 
-const { width, height } = require("../utils/index");
+const { width, height } = require("../utils/createConfig");
 
 if (!fs.existsSync(extractDir)) {
   fs.mkdirSync(extractDir);
@@ -39,8 +39,12 @@ exports.uploadFile = (req, res, next) => {
       return res.status(400).json({ message: "No files uploaded" });
 
     const filePath = files.file.filepath;
-    const fileExt = path.extname(files.file.originalFilename);
-    // const fileName = path.basename(files.file.originalFilename, fileExt);
+    // console.log({ files });
+    const fileExt = path.extname(files.file.originalFilename || "input.zip");
+    // const fileName = path.basename(
+    //   files.file.originalFilename || "input.zip",
+    //   fileExt
+    // );
 
     if (fileExt !== ".zip") {
       return res.status(400).json({ message: "Unsupported file type" });

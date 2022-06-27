@@ -52,12 +52,12 @@ const createConfig = (destination, width, height) => {
       // Must bee the same as value on line 12 | ALL CAPITALIZATIONS MATTER
       name: "Nft", // Make same as above | This is just a skeleton, more characters/skins can be added later
       layers: [
-        getElementsTrait(traits, "accessory", width, height),
         getElementsTrait(traits, "background", width, height),
         getElementsTrait(traits, "face", width, height),
-        getElementsTrait(traits, "left_eye", width, height),
+        getElementsTrait(traits, "accessory", width, height),
         getElementsTrait(traits, "mouth", width, height),
         getElementsTrait(traits, "right_eye", width, height),
+        getElementsTrait(traits, "left_eye", width, height),
       ],
     },
   };
@@ -71,7 +71,32 @@ const getElementsTrait = (traits, type, width, height) => {
     return trait.type === type;
   });
 
-  const weightRate = Math.floor((Math.random() * 100) / traitFiltered.length);
+  let weightRate;
+  switch (type) {
+    case "background":
+      weightRate =
+        Math.floor((Math.random() * 100) / traitFiltered.length) + 10;
+      break;
+    case "face":
+      weightRate = Math.floor((Math.random() * 100) / traitFiltered.length) + 8;
+      break;
+    case "accessory":
+      weightRate = Math.floor((Math.random() * 100) / traitFiltered.length) + 5;
+      break;
+    case "mouth":
+      weightRate = Math.floor((Math.random() * 100) / traitFiltered.length) + 3;
+      break;
+    case "right_eye":
+      weightRate = Math.floor((Math.random() * 100) / traitFiltered.length) + 6;
+      break;
+    case "left_eye":
+      weightRate = Math.floor((Math.random() * 100) / traitFiltered.length) + 6;
+      break;
+    default:
+      console.log("not found");
+  }
+
+  console.log(`weight rate of ${type} is `, weightRate);
 
   traitFiltered.forEach((trait, i) => {
     if (trait.type === type) {
