@@ -2,35 +2,42 @@ const fs = require("fs");
 const path = require("path");
 const extract = require("extract-zip");
 const formidable = require("formidable");
+const AdmZip = require("adm-zip");
+const { v4: uuidv4 } = require("uuid");
 
 const extractDir = path.join(__dirname, "../../generate/inputs/");
-const outputDir = path.join(__dirname, "../../generate/outputs/output/");
 
 const { startCreating } = require("../utils/generate");
-const { createConfig } = require("../utils/createConfig");
+const { createConfig, width, height } = require("../utils/createConfig");
+const mapFolder = require("map-folder");
 
-const { width, height } = require("../utils/createConfig");
+const basePath = process.cwd();
 
 if (!fs.existsSync(extractDir)) {
   fs.mkdirSync(extractDir);
 }
 
-if (!fs.existsSync(outputDir)) {
-  fs.mkdirSync(outputDir);
-}
-
-exports.getHello = async (req, res) => {
-  res.status(200).json({
-    message: "Hello",
-  });
+exports.download = async (req, res) => {
+  try {
+    const outputName = req.query.dir;
+    const outputPath = `${basePath}/generate/download/${outputName}`;
+    if (fs.existsSync(extractDir)) {
+      res.download(outputPath);
+    } else {
+      res.status(404).json({
+        message: "file maybe doesn't exist",
+      });
+    }
+  } catch (error) {
+    console.log("🍕 ~ error", error);
+  }
 };
 
-exports.uploadFile = (req, res, next) => {
+exports.uploadFile = async (req, res, next) => {
   const form = new formidable.IncomingForm();
   // form.maxFileSize = 1000 * 1024 * 1024;
   form.keepExtensions = true;
   form.multiples = false;
-  // form.uploadDir = uploadDir;
 
   form.parse(req, function (err, fields, files) {
     if (err) return res.status(500).json({ error: err });
@@ -39,47 +46,57 @@ exports.uploadFile = (req, res, next) => {
       return res.status(400).json({ message: "No files uploaded" });
 
     const filePath = files.file.filepath;
-    // console.log({ files });
     const fileExt = path.extname(files.file.originalFilename || "input.zip");
-    // const fileName = path.basename(
-    //   files.file.originalFilename || "input.zip",
-    //   fileExt
-    // );
 
     if (fileExt !== ".zip") {
       return res.status(400).json({ message: "Unsupported file type" });
     } else {
-      res.status(200).json({ uploaded: true });
-    }
+      const destDir = `${path.join(extractDir, "input")}_${uuidv4()}`;
+      const outputName = `output_${uuidv4()}`;
+      extract(filePath, { dir: destDir }, (err) => {
+        if (!err) {
+          if (true) fs.unlinkSync(file);
+          // nestedExtract(destDir, extractZip);
+        } else {
+          console.error(err);
+        }
+      }).then(() => {
+        const resultRace = createConfig(destDir, width, height);
+        const outDir = `${basePath}/generate/outputs/output_${uuidv4()}`;
 
-    const destDir = `${path.join(extractDir, "input")}_${new Date().getTime()}`;
-    extractZip(filePath, destDir, false);
-  });
-};
-
-const extractZip = (file, destination, deleteSource) => {
-  extract(file, { dir: destination }, (err) => {
-    if (!err) {
-      if (deleteSource) fs.unlinkSync(file);
-      nestedExtract(destination, extractZip);
-    } else {
-      console.error(err);
-    }
-  }).then(() => {
-    const resultRace = createConfig(destination, width, height);
-    startCreating(resultRace);
-  });
-};
-
-const nestedExtract = (dir, zipExtractor) => {
-  fs.readdirSync(dir).forEach((file) => {
-    if (fs.statSync(path.join(dir, file)).isFile()) {
-      if (path.extname(file) === ".zip") {
-        // deleteSource = true to avoid infinite loops caused by extracting same file
-        zipExtractor(path.join(dir, file), dir, true);
-      }
-    } else {
-      nestedExtract(path.join(dir, file), zipExtractor);
+        startCreating(resultRace, outDir)
+          .then((_d) => {
+            fs.rmSync(destDir, { recursive: true });
+            const outputData = mapFolder(outDir, {});
+            const entriesOutput = outputData.entries;
+            var zip = new AdmZip();
+            Object.keys(entriesOutput).map((file) => {
+              if (entriesOutput[file].ext === "png") {
+                zip.addFile(
+                  `output/images/${entriesOutput[file].name}`,
+                  fs.readFileSync(entriesOutput[file].path)
+                );
+              } else {
+                zip.addFile(
+                  `output/metadata/${entriesOutput[file].name}`,
+                  fs.readFileSync(entriesOutput[file].path)
+                );
+              }
+            });
+            zip.writeZip(`${basePath}/generate/download/${outputName}.zip`);
+          })
+          .then((_d) => {
+            fs.rmSync(outDir, { recursive: true });
+          })
+          .then((_d) => {
+            res.status(200).json({ outputDir: `${outputName}.zip` });
+            setTimeout(() => {
+              fs.rmSync(`${basePath}/generate/download/${outputName}.zip`, {
+                recursive: true,
+              });
+            }, 3 * 60 * 1000);
+          });
+      });
     }
   });
 };

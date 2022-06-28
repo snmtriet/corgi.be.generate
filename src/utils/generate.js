@@ -17,11 +17,10 @@ const ctx = canvas.getContext("2d");
 var metadataList = [];
 var attributesList = [];
 var dnaList = [];
-const basePath = process.cwd();
 
-const saveImage = (_editionCount) => {
+const saveImage = (_editionCount, outputFolder) => {
   fs.writeFileSync(
-    `${basePath}/generate/outputs/output/${_editionCount}.png`,
+    `${outputFolder}/${_editionCount}.png`,
     canvas.toBuffer("image/png")
   );
 };
@@ -111,20 +110,25 @@ const createDna = (_races, _race) => {
   return randNum;
 };
 
-const writeMetaData = (_data) => {
-  fs.writeFileSync(`${basePath}/generate/outputs/output/_metadata.json`, _data);
+const writeMetaData = (_data, outputFolder) => {
+  fs.writeFileSync(`${outputFolder}/_metadata.json`, _data);
 };
 
-const saveMetaDataSingleFile = (_editionCount) => {
+const saveMetaDataSingleFile = (_editionCount, outputFolder) => {
   fs.writeFileSync(
-    `${basePath}/generate/outputs/output/${_editionCount}.json`,
+    `${outputFolder}/${_editionCount}.json`,
     JSON.stringify(metadataList.find((meta) => meta.edition == _editionCount))
   );
 };
 
-const startCreating = async (races) => {
-  writeMetaData("");
+const startCreating = async (races, outputFolder) => {
+  if (!fs.existsSync(outputFolder)) {
+    fs.mkdirSync(outputFolder);
+  }
+
+  writeMetaData("", outputFolder);
   let editionCount = startEditionFrom;
+
   while (editionCount <= endEditionAt) {
     let race = getRace(editionCount);
     let newDna = createDna(races, race);
@@ -141,9 +145,10 @@ const startCreating = async (races) => {
         elementArray.forEach((element) => {
           drawElement(element);
         });
-        saveImage(editionCount);
+        saveImage(editionCount, outputFolder);
+
         addMetadata(newDna, editionCount);
-        saveMetaDataSingleFile(editionCount);
+        saveMetaDataSingleFile(editionCount, outputFolder);
         console.log(
           `Created edition: ${editionCount}, Race: ${race} with DNA: ${newDna}`
         );
@@ -154,7 +159,7 @@ const startCreating = async (races) => {
       console.log("DNA exists!");
     }
   }
-  writeMetaData(JSON.stringify(metadataList));
+  writeMetaData(JSON.stringify(metadataList), outputFolder);
 };
 
 module.exports = { startCreating };
