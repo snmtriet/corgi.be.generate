@@ -4,8 +4,6 @@ const { createCanvas, loadImage } = require("canvas");
 const {
   width,
   height,
-  description,
-  baseImageUri,
   startEditionFrom,
   endEditionAt,
   raceWeights,
@@ -25,13 +23,13 @@ const saveImage = (_editionCount, outputFolder) => {
   );
 };
 
-const addMetadata = (_dna, _edition) => {
+const addMetadata = (_dna, _edition, _contractName) => {
   let dateTime = Date.now();
   let tempMetadata = {
     dna: _dna.join(""),
-    name: `Nft #${_edition}`,
-    description: description,
-    image: `${baseImageUri}/Nft ${_edition}.png`,
+    name: `${_contractName} #${_edition}`,
+    description: `${_contractName} #${_edition} - Generated and deployed on LaunchMyNFT.`,
+    image: `/${_edition}.png`,
     edition: _edition,
     date: dateTime,
     attributes: attributesList,
@@ -121,7 +119,12 @@ const saveMetaDataSingleFile = (_editionCount, outputFolder) => {
   );
 };
 
-const startCreating = async (races, outputFolder) => {
+const startCreating = async (
+  races,
+  outputFolder,
+  contractName,
+  collectionName
+) => {
   if (!fs.existsSync(outputFolder)) {
     fs.mkdirSync(outputFolder);
   }
@@ -147,7 +150,7 @@ const startCreating = async (races, outputFolder) => {
         });
         saveImage(editionCount, outputFolder);
 
-        addMetadata(newDna, editionCount);
+        addMetadata(newDna, editionCount, contractName);
         saveMetaDataSingleFile(editionCount, outputFolder);
         console.log(
           `Created edition: ${editionCount}, Race: ${race} with DNA: ${newDna}`

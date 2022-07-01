@@ -1,15 +1,16 @@
 const fs = require("fs");
 const path = require("path");
-const extract = require("extract-zip");
-const formidable = require("formidable");
 const AdmZip = require("adm-zip");
 const { v4: uuidv4 } = require("uuid");
+const extract = require("extract-zip");
+const mapFolder = require("map-folder");
+const formidable = require("formidable");
 
 const extractDir = path.join(__dirname, "../../generate/inputs/");
 
 const { startCreating } = require("../utils/generate");
 const { createConfig, width, height } = require("../utils/createConfig");
-const mapFolder = require("map-folder");
+const { pinFileToIPFS } = require("../axios");
 
 const basePath = process.cwd();
 
@@ -22,10 +23,17 @@ exports.download = async (req, res) => {
     const outputName = req.query.dir;
     const outputPath = `${basePath}/generate/download/${outputName}`;
     if (fs.existsSync(extractDir)) {
-      res.download(outputPath);
+      res.download(outputPath, (err) => {
+        console.log(err);
+        setTimeout(() => {
+          fs.rmSync(outputPath, {
+            recursive: true,
+          });
+        }, 30 * 60 * 1000);
+      });
     } else {
       res.status(404).json({
-        message: "file maybe doesn't exist",
+        message: "File maybe doesn't exist",
       });
     }
   } catch (error) {
@@ -34,6 +42,8 @@ exports.download = async (req, res) => {
 };
 
 exports.uploadFile = async (req, res, next) => {
+  const contractName = req.query.contractName;
+  const collectionName = req.query.collectionName;
   const form = new formidable.IncomingForm();
   // form.maxFileSize = 1000 * 1024 * 1024;
   form.keepExtensions = true;
@@ -62,13 +72,15 @@ exports.uploadFile = async (req, res, next) => {
         }
       }).then(() => {
         const resultRace = createConfig(destDir, width, height);
-        const outDir = `${basePath}/generate/outputs/output_${uuidv4()}`;
+        const outputDirName = `output_${uuidv4()}`;
+        const outDir = `${basePath}/generate/outputs/${outputDirName}`;
 
-        startCreating(resultRace, outDir)
+        startCreating(resultRace, outDir, contractName, collectionName)
           .then((_d) => {
             fs.rmSync(destDir, { recursive: true });
             const outputData = mapFolder(outDir, {});
             const entriesOutput = outputData.entries;
+
             var zip = new AdmZip();
             Object.keys(entriesOutput).map((file) => {
               if (entriesOutput[file].ext === "png") {
@@ -83,18 +95,45 @@ exports.uploadFile = async (req, res, next) => {
                 );
               }
             });
-            zip.writeZip(`${basePath}/generate/download/${outputName}.zip`);
+            if (!fs.existsSync(`${basePath}/generate/download/`)) {
+              fs.mkdirSync(`${basePath}/generate/download/`);
+              zip.writeZip(`${basePath}/generate/download/${outputName}.zip`);
+            } else {
+              zip.writeZip(`${basePath}/generate/download/${outputName}.zip`);
+            }
+            return entriesOutput;
           })
-          .then((_d) => {
+          .then(async (entriesOutput) => {
+            const entriesImage = Object.keys(entriesOutput).filter((file) => {
+              return entriesOutput[file].ext === "png";
+            });
+            const URI = await pinFileToIPFS(
+              entriesImage,
+              outDir,
+              outputDirName
+            );
             fs.rmSync(outDir, { recursive: true });
-          })
-          .then((_d) => {
-            res.status(200).json({ outputDir: `${outputName}.zip` });
+            res.status(200).json({
+              outputDir: `${outputName}.zip`,
+              dataURI: {
+                URI: URI,
+                total: entriesImage.length,
+              },
+            });
             setTimeout(() => {
-              fs.rmSync(`${basePath}/generate/download/${outputName}.zip`, {
-                recursive: true,
-              });
-            }, 3 * 60 * 1000);
+              if (
+                fs.existsSync(`${basePath}/generate/download/${outputName}.zip`)
+              ) {
+                fs.rmSync(`${basePath}/generate/download/${outputName}.zip`, {
+                  recursive: true,
+                });
+              }
+              if (fs.existsSync(outDir)) {
+                fs.rmSync(outDir, {
+                  recursive: true,
+                });
+              }
+            }, 24 * 60 * 60 * 1000);
           });
       });
     }

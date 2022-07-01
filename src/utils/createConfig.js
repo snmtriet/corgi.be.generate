@@ -2,10 +2,8 @@ const mapFolder = require("map-folder");
 
 // --------------------------
 
-const width = 1000; // Change to the resolution you want 1000 x 1000 is common
-const height = 1000;
-const description = "Nft description";
-const baseImageUri = "https://gateway.ipfs.io/";
+const width = 1080; // Change to the resolution you want 1000 x 1000 is common
+const height = 1080;
 const startEditionFrom = 1; //
 const endEditionAt = 10; // endEditionAt and edtionSize MUST be the SAME // start at 10 for testing purposes
 const editionSize = 10; // this will print 10 copies
@@ -53,11 +51,11 @@ const createConfig = (destination, width, height) => {
       name: "Nft", // Make same as above | This is just a skeleton, more characters/skins can be added later
       layers: [
         getElementsTrait(traits, "background", width, height),
-        getElementsTrait(traits, "face", width, height),
-        getElementsTrait(traits, "accessory", width, height),
-        getElementsTrait(traits, "mouth", width, height),
-        getElementsTrait(traits, "right_eye", width, height),
-        getElementsTrait(traits, "left_eye", width, height),
+        getElementsTrait(traits, "face", width, height), // body
+        getElementsTrait(traits, "mouth", width, height), // mouth
+        getElementsTrait(traits, "left_eye", width, height), // shirt
+        getElementsTrait(traits, "right_eye", width, height), //eyes
+        getElementsTrait(traits, "accessory", width, height), // hat
       ],
     },
   };
@@ -78,19 +76,19 @@ const getElementsTrait = (traits, type, width, height) => {
         Math.floor((Math.random() * 100) / traitFiltered.length) + 10;
       break;
     case "face":
-      weightRate = Math.floor((Math.random() * 100) / traitFiltered.length) + 8;
-      break;
-    case "accessory":
       weightRate = Math.floor((Math.random() * 100) / traitFiltered.length) + 5;
       break;
+    case "accessory":
+      weightRate = Math.floor((Math.random() * 100) / traitFiltered.length) + 2;
+      break;
     case "mouth":
-      weightRate = Math.floor((Math.random() * 100) / traitFiltered.length) + 3;
+      weightRate = Math.floor((Math.random() * 100) / traitFiltered.length) + 7;
       break;
     case "right_eye":
       weightRate = Math.floor((Math.random() * 100) / traitFiltered.length) + 6;
       break;
     case "left_eye":
-      weightRate = Math.floor((Math.random() * 100) / traitFiltered.length) + 6;
+      weightRate = Math.floor((Math.random() * 100) / traitFiltered.length) + 3;
       break;
     default:
       console.log("not found");
@@ -122,8 +120,6 @@ const getElementsTrait = (traits, type, width, height) => {
 module.exports = {
   width,
   height,
-  description,
-  baseImageUri,
   startEditionFrom,
   endEditionAt,
   raceWeights,
