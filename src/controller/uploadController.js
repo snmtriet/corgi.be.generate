@@ -10,7 +10,7 @@ const extractDir = path.join(__dirname, "../../generate/inputs/");
 
 const { startCreating } = require("../utils/generate");
 const { createConfig, width, height } = require("../utils/createConfig");
-const { pinFileToIPFS } = require("../axios");
+const { pinFileToDo } = require("../pinFile");
 
 const basePath = process.cwd();
 
@@ -29,11 +29,11 @@ exports.download = async (req, res) => {
           fs.rmSync(outputPath, {
             recursive: true,
           });
-        }, 30 * 60 * 1000);
+        }, 1 * 1 * 60 * 1000);
       });
     } else {
       res.status(404).json({
-        message: "File maybe doesn't exist",
+        message: "Some thing went wrong!",
       });
     }
   } catch (error) {
@@ -107,16 +107,14 @@ exports.uploadFile = async (req, res, next) => {
             const entriesImage = Object.keys(entriesOutput).filter((file) => {
               return entriesOutput[file].ext === "png";
             });
-            const URI = await pinFileToIPFS(
-              entriesImage,
-              outDir,
-              outputDirName
-            );
+
+            const URI = await pinFileToDo(entriesImage, outDir, outputDirName);
             fs.rmSync(outDir, { recursive: true });
             res.status(200).json({
               outputDir: `${outputName}.zip`,
               dataURI: {
                 URI: URI,
+                outputDirName,
                 total: entriesImage.length,
               },
             });
@@ -133,7 +131,7 @@ exports.uploadFile = async (req, res, next) => {
                   recursive: true,
                 });
               }
-            }, 24 * 60 * 60 * 1000);
+            }, 12 * 60 * 60 * 1000);
           });
       });
     }

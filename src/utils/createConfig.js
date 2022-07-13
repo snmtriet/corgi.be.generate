@@ -5,8 +5,8 @@ const mapFolder = require("map-folder");
 const width = 1080; // Change to the resolution you want 1000 x 1000 is common
 const height = 1080;
 const startEditionFrom = 1; //
-const endEditionAt = 10; // endEditionAt and edtionSize MUST be the SAME // start at 10 for testing purposes
-const editionSize = 10; // this will print 10 copies
+const endEditionAt = 500; // endEditionAt and editionSize MUST be the SAME // start at 30 for testing purposes
+const editionSize = 500; // this will print 10 copies
 const raceWeights = [
   {
     value: "Nft", // Change to whatever you want
@@ -72,23 +72,22 @@ const getElementsTrait = (traits, type, width, height) => {
   let weightRate;
   switch (type) {
     case "background":
-      weightRate =
-        Math.floor((Math.random() * 100) / traitFiltered.length) + 10;
+      weightRate = Math.floor((Math.random() * 100) / traitFiltered.length) + 8;
       break;
     case "face":
-      weightRate = Math.floor((Math.random() * 100) / traitFiltered.length) + 5;
+      weightRate = Math.floor((Math.random() * 100) / traitFiltered.length) + 7;
       break;
     case "accessory":
-      weightRate = Math.floor((Math.random() * 100) / traitFiltered.length) + 2;
+      weightRate = Math.floor((Math.random() * 100) / traitFiltered.length) + 5;
       break;
     case "mouth":
-      weightRate = Math.floor((Math.random() * 100) / traitFiltered.length) + 7;
+      weightRate = Math.floor((Math.random() * 100) / traitFiltered.length) + 4;
       break;
     case "right_eye":
       weightRate = Math.floor((Math.random() * 100) / traitFiltered.length) + 6;
       break;
     case "left_eye":
-      weightRate = Math.floor((Math.random() * 100) / traitFiltered.length) + 3;
+      weightRate = Math.floor((Math.random() * 100) / traitFiltered.length) + 6;
       break;
     default:
       console.log("not found");
